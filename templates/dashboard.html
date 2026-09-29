@@ -4,51 +4,138 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LungTrace Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f6f8; color: #1f2933; margin: 0; }
-  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  .sub { color: #616e7c; margin-bottom: 20px; }
-  .controls { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
-  select { font-size: 1rem; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 6px; background: #fff; }
-  .toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; }
-  .switch { position: relative; width: 48px; height: 26px; }
+  :root {
+    --bg: #eef2f7; --card: #ffffff; --ink: #1c2b3a; --muted: #6b7c8f; --line: #e2e8f0;
+    --blue: #2b6cb0; --blue-dark: #235a94; --blue-soft: #ebf4ff; --teal: #2c9aa6;
+    --green: #2f9e6b; --grey: #a3b0bf; --red: #c53030; --red-soft: #fff1f0; --red-line: #f5b5b0;
+    --shadow: 0 1px 2px rgba(20,40,70,.05), 0 4px 14px rgba(20,40,70,.06);
+    --icon-info: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3 12 7 12 10 4 14 20 17 12 21 12'/%3E%3C/svg%3E");
+    --icon-list: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='4' y='3' width='16' height='18' rx='2'/%3E%3Cline x1='8' y1='8' x2='16' y2='8'/%3E%3Cline x1='8' y1='12' x2='16' y2='12'/%3E%3Cline x1='8' y1='16' x2='13' y2='16'/%3E%3C/svg%3E");
+    --icon-plus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z'/%3E%3Cline x1='12' y1='11' x2='12' y2='17'/%3E%3Cline x1='9' y1='14' x2='15' y2='14'/%3E%3C/svg%3E");
+    --icon-alert: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3 2 20h20z'/%3E%3Cline x1='12' y1='10' x2='12' y2='14'/%3E%3Cline x1='12' y1='17.5' x2='12' y2='17.6'/%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; }
+  body { font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--ink); margin: 0; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  main { max-width: 820px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  /* Header */
+  header { display: flex; align-items: center; gap: 14px; margin-bottom: 26px; }
+  .logo { width: 52px; height: 52px; border-radius: 14px; background: linear-gradient(135deg, var(--blue), var(--teal)); display: grid; place-items: center; box-shadow: 0 6px 16px rgba(43,108,176,.3); flex: none; }
+  .logo svg { width: 30px; height: 30px; }
+  h1 { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
+  .sub { color: var(--muted); font-size: .85rem; margin-top: 3px; }
+
+  /* Controls */
+  .controls { display: flex; gap: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 14px 18px; margin-bottom: 20px; }
+  select, input[type=date] { font: inherit; font-size: .95rem; padding: 9px 12px; border: 1px solid #cbd5e0; border-radius: 8px; background: #fff; color: var(--ink); transition: border-color .15s, box-shadow .15s; }
+  select:focus, input[type=date]:focus, textarea:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(43,108,176,.18); }
+  #patient { min-width: 240px; font-weight: 600; }
+  .toggle { display: flex; align-items: center; gap: 12px; font-weight: 700; font-size: .95rem; cursor: pointer; }
+  .switch { position: relative; width: 64px; height: 34px; flex: none; }
   .switch input { opacity: 0; width: 0; height: 0; }
-  .slider { position: absolute; inset: 0; background: #9aa5b1; border-radius: 26px; cursor: pointer; transition: .2s; }
-  .slider::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
-  input:checked + .slider { background: #2f855a; }
-  input:checked + .slider::before { transform: translateX(22px); }
-  section { background: #fff; border: 1px solid #e4e7eb; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
-  h2 { font-size: 1rem; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; color: #52606d; }
-  .alert { background: #fdecea; border: 2px solid #d64545; color: #8a1c1c; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-weight: 600; }
-  .muted { color: #7b8794; }
+  .slider { position: absolute; inset: 0; background: var(--grey); border-radius: 34px; cursor: pointer; transition: background .25s; box-shadow: inset 0 1px 3px rgba(0,0,0,.15); }
+  .slider::before { content: ""; position: absolute; width: 26px; height: 26px; left: 4px; top: 4px; background: #fff; border-radius: 50%; transition: transform .25s cubic-bezier(.4,0,.2,1); box-shadow: 0 2px 5px rgba(0,0,0,.25); }
+  input:checked + .slider { background: var(--green); }
+  input:checked + .slider::before { transform: translateX(30px); }
+  input:focus-visible + .slider { box-shadow: 0 0 0 3px rgba(43,108,176,.35); }
+  #memory-label { min-width: 30px; color: var(--grey); transition: color .2s; }
+  main:has(#memory:checked) #memory-label { color: var(--green); }
+
+  /* Cards (JS renders plain <section>) */
+  section { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); padding: 20px 22px 20px 26px; margin-bottom: 18px; overflow: hidden; }
+  section::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--blue); }
+  section:has(table)::before { background: var(--teal); }
+  section.submit::before { background: #6b7fd7; }
+  h2 { display: flex; align-items: center; gap: 9px; font-size: .8rem; font-weight: 700; margin: 0 0 14px; text-transform: uppercase; letter-spacing: .07em; color: #4a5b6e; }
+  h2::before { content: ""; width: 18px; height: 18px; background: var(--blue); -webkit-mask: var(--icon-info) center/contain no-repeat; mask: var(--icon-info) center/contain no-repeat; flex: none; }
+  section:has(table) h2::before { background: var(--teal); -webkit-mask-image: var(--icon-list); mask-image: var(--icon-list); }
+  section.submit h2::before { background: #6b7fd7; -webkit-mask-image: var(--icon-plus); mask-image: var(--icon-plus); }
+  section p { margin: 6px 0; }
+  .muted { color: var(--muted); }
   ul { margin: 0; padding-left: 20px; }
-  li { margin-bottom: 6px; }
-  table { width: 100%; border-collapse: collapse; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
-  th { color: #616e7c; font-weight: 600; font-size: .85rem; }
-  .error { color: #8a1c1c; }
-  .submit label { display: block; font-weight: 600; margin: 10px 0 4px; }
-  .submit .row { display: flex; gap: 12px; flex-wrap: wrap; }
-  .submit textarea { width: 100%; box-sizing: border-box; min-height: 140px; font: inherit; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 6px; }
-  .submit input[type=date] { font-size: 1rem; padding: 7px 10px; border: 1px solid #cbd2d9; border-radius: 6px; }
-  button { font-size: 1rem; padding: 9px 18px; border: 0; border-radius: 6px; background: #2b6cb0; color: #fff; cursor: pointer; margin-top: 12px; }
-  button:disabled { background: #9aa5b1; cursor: wait; }
-  .spinner { display: none; width: 16px; height: 16px; border: 3px solid #cbd2d9; border-top-color: #2b6cb0; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin: 0 8px 0 14px; }
+  li { margin-bottom: 8px; font-size: 1.02rem; }
+  li:last-child { margin-bottom: 0; }
+
+  /* Open-loop alert (JS renders <div class="alert">) */
+  .alert { position: relative; background: var(--red-soft); border: 1px solid var(--red-line); border-left: 6px solid var(--red); color: #7a1f1f; border-radius: 12px; padding: 16px 18px 16px 68px; margin-bottom: 18px; font-weight: 600; box-shadow: 0 4px 14px rgba(197,48,48,.12); }
+  .alert::before { content: ""; position: absolute; left: 18px; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; border-radius: 50%; background: var(--red) var(--icon-alert) center/20px no-repeat; box-shadow: 0 0 0 5px rgba(197,48,48,.15); }
+  .alert::after { content: "Follow-up overdue"; position: absolute; top: 6px; left: 68px; font-size: .68rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; color: var(--red); }
+  .alert { padding-top: 26px; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  th, td { text-align: left; padding: 10px 12px; vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; border-bottom: 2px solid var(--line); background: #f8fafc; }
+  tr:first-child th:first-child { border-top-left-radius: 8px; }
+  tr:first-child th:last-child { border-top-right-radius: 8px; }
+  td { border-bottom: 1px solid var(--line); }
+  tr:nth-child(even) td { background: #f8fafc; }
+  tr:last-child td { border-bottom: 0; }
+  td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  td:nth-child(2) { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  section:has(table) { overflow-x: auto; }
+
+  /* Memory OFF: reinforce "seeing less" */
+  main:has(#memory:not(:checked)) #content { position: relative; padding-top: 34px; }
+  main:has(#memory:not(:checked)) #content::before { content: "Limited view: no patient history available to the model"; position: absolute; top: 0; left: 0; right: 0; font-size: .8rem; font-weight: 600; color: #6b7c8f; background: #e6ebf1; border-radius: 8px; padding: 6px 12px; }
+  main:has(#memory:not(:checked)) #content section { filter: grayscale(.9); opacity: .8; }
+  main:has(#memory:not(:checked)) #content section::before { background: var(--grey); }
+
+  /* Submit panel */
+  .submit label { display: block; font-weight: 600; font-size: .85rem; margin: 12px 0 5px; color: #3d4f63; }
+  .submit .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .submit .row > div { flex: 1 1 200px; }
+  .submit .row select, .submit .row input { width: 100%; }
+  .submit textarea { width: 100%; min-height: 200px; font: inherit; font-size: .95rem; line-height: 1.55; padding: 12px 14px; border: 1px solid #cbd5e0; border-radius: 10px; resize: vertical; background: #fbfcfe; transition: border-color .15s, box-shadow .15s; }
+  .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
+  button { font: inherit; font-size: 1rem; font-weight: 600; padding: 11px 24px; border: 0; border-radius: 9px; background: var(--blue); color: #fff; cursor: pointer; box-shadow: 0 2px 6px rgba(43,108,176,.35); transition: background .15s, transform .05s, box-shadow .15s; }
+  button:hover:not(:disabled) { background: var(--blue-dark); box-shadow: 0 4px 12px rgba(43,108,176,.4); }
+  button:active:not(:disabled) { transform: translateY(1px); }
+  button:disabled { background: var(--grey); box-shadow: none; cursor: wait; }
+  .spinner { display: none; width: 20px; height: 20px; border: 3px solid #d5dde8; border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; margin: 0 10px 0 16px; }
   .busy .spinner { display: inline-block; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .ok { color: #276749; font-weight: 600; }
+  #sub-status { font-size: .92rem; }
+  .ok { color: #22764f; font-weight: 600; }
+  .error { color: var(--red); font-weight: 500; }
+  #error:not(:empty) { background: var(--red-soft); border: 1px solid var(--red-line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+
+  @media (max-width: 560px) {
+    main { padding: 20px 12px 48px; }
+    h1 { font-size: 1.6rem; }
+    .logo { width: 44px; height: 44px; }
+    #patient { min-width: 0; width: 100%; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .toggle { justify-content: space-between; }
+    section { padding: 16px 16px 16px 20px; }
+    .alert { padding-left: 62px; }
+  }
 </style>
 </head>
 <body>
 <main>
-  <h1>LungTrace</h1>
-  <div class="sub">Longitudinal imaging memory and follow-up. Synthetic demo data only.</div>
+  <header>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 5v9"/>
+        <path d="M14 12c-2.5-1.500-5.500 0-7 3.500S5 24 7 26.500s5 .5 6.500-1.500c.8-1.100.5-3 .5-5z"/>
+        <path d="M18 12c2.500-1.500 5.500 0 7 3.500S27 24 25 26.500s-5 .5-6.500-1.500c-.8-1.100-.5-3-.5-5z"/>
+      </svg>
+    </div>
+    <div>
+      <h1>LungTrace</h1>
+      <div class="sub">Longitudinal imaging memory and follow-up. Synthetic demo data only.</div>
+    </div>
+  </header>
 
   <div class="controls">
     <select id="patient"></select>
     <label class="toggle">
-      Memory:
+      Memory
       <span class="switch"><input type="checkbox" id="memory" checked><span class="slider"></span></span>
       <span id="memory-label">ON</span>
     </label>
@@ -65,7 +152,7 @@
     </div>
     <label for="sub-text">Report text</label>
     <textarea id="sub-text" placeholder="Paste the radiology report here..."></textarea>
-    <div>
+    <div class="actions">
       <button id="sub-btn">Process Report</button>
       <span class="spinner" id="sub-spin"></span><span id="sub-status"></span>
     </div>
