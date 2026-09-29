@@ -11,6 +11,7 @@ from extraction import extract_finding
 load_dotenv()
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "synthetic_reports.json")
+INDEX_PATH = os.path.join(os.path.dirname(__file__), "data", "findings_index.json")
 
 
 def build_content(finding: dict) -> str:
@@ -37,6 +38,7 @@ def main():
         by_patient[report["patient_id"]].append(report)
 
     total_retained = 0
+    index = defaultdict(list)  # local structured copy, used by interval_check.py
     for patient_id, patient_reports in by_patient.items():
         patient_reports.sort(key=lambda r: r["date"])
         patient_name = patient_reports[0]["patient_name"]
@@ -59,9 +61,14 @@ def main():
                     document_id=f"{patient_id}-{report['date']}",
                 )
                 total_retained += 1
+                index[patient_id].append({k: finding[k] for k in ("date", "organ", "location", "finding_type", "size_mm", "recommendation", "follow_up_due_date")})
                 print(f"[retain] {patient_id} {report['date']}: {content[:90]}...")
             except Exception as e:
                 print(f"[error] {patient_id} {report['date']}: {e}")
+
+    with open(INDEX_PATH, "w", encoding="utf-8") as f:
+        json.dump(index, f, indent=2)
+    print(f"[index] wrote {INDEX_PATH}")
 
     print(f"\nSummary: {len(by_patient)} patients, {total_retained} findings retained "
           f"(of {len(reports)} reports)")
