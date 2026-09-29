@@ -104,6 +104,36 @@
   .error { color: var(--red); font-weight: 500; }
   #error:not(:empty) { background: var(--red-soft); border: 1px solid var(--red-line); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
 
+  /* Top nav */
+  .topnav { background: var(--card); border-bottom: 1px solid var(--line); box-shadow: 0 1px 3px rgba(20,40,70,.06); }
+  .topnav-inner { max-width: 820px; margin: 0 auto; padding: 12px 20px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+  .topnav header { margin: 0; }
+  .topnav .logo { width: 40px; height: 40px; border-radius: 11px; }
+  .topnav .logo svg { width: 24px; height: 24px; }
+  .topnav h1 { font-size: 1.4rem; }
+  .topnav .sub { display: none; }
+  .userbox { display: flex; align-items: center; gap: 12px; font-size: .88rem; text-align: right; }
+  .userbox .who { color: var(--ink); font-weight: 600; }
+  .userbox .who span { display: block; color: var(--muted); font-weight: 400; font-size: .8rem; }
+  .userbox a { color: var(--blue); font-weight: 600; text-decoration: none; padding: 6px 12px; border: 1px solid #cbd5e0; border-radius: 8px; white-space: nowrap; }
+  .userbox a:hover { background: var(--blue-soft); }
+  #app-view main { padding-top: 24px; }
+  #app-view main .tagline { color: var(--muted); font-size: .85rem; margin: 0 0 18px; }
+
+  /* Login */
+  #login-view { min-height: 100vh; display: grid; place-items: center; padding: 20px; }
+  .login-card { width: 100%; max-width: 400px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; box-shadow: 0 10px 30px rgba(20,40,70,.12); padding: 32px 30px 28px; }
+  .login-card .brand { display: flex; flex-direction: column; align-items: center; text-align: center; margin-bottom: 22px; }
+  .login-card .logo { width: 60px; height: 60px; margin-bottom: 12px; }
+  .login-card .logo svg { width: 34px; height: 34px; }
+  .login-card h1 { font-size: 1.9rem; }
+  .login-card label { display: block; font-weight: 600; font-size: .85rem; margin: 14px 0 5px; color: #3d4f63; }
+  .login-card input[type=text] { width: 100%; font: inherit; font-size: .95rem; padding: 11px 13px; border: 1px solid #cbd5e0; border-radius: 9px; transition: border-color .15s, box-shadow .15s; }
+  .login-card input[type=text]:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 3px rgba(43,108,176,.18); }
+  .login-card button { width: 100%; margin-top: 22px; }
+  .login-card .note { color: var(--muted); font-size: .78rem; text-align: center; margin-top: 16px; }
+  .hidden { display: none !important; }
+
   @media (max-width: 560px) {
     main { padding: 20px 12px 48px; }
     h1 { font-size: 1.6rem; }
@@ -113,12 +143,36 @@
     .toggle { justify-content: space-between; }
     section { padding: 16px 16px 16px 20px; }
     .alert { padding-left: 62px; }
+    .topnav-inner { padding: 10px 12px; }
+    .userbox .who span { display: none; }
   }
 </style>
 </head>
 <body>
-<main>
-  <header>
+<div id="login-view">
+  <form class="login-card" id="login-form" autocomplete="off">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 5v9"/>
+        <path d="M14 12c-2.5-1.500-5.500 0-7 3.500S5 24 7 26.500s5 .5 6.500-1.500c.8-1.100.5-3 .5-5z"/>
+        <path d="M18 12c2.500-1.500 5.500 0 7 3.500S27 24 25 26.500s-5 .5-6.500-1.500c-.8-1.100-.5-3-.5-5z"/>
+      </svg></div>
+      <h1>LungTrace</h1>
+      <div class="sub">Longitudinal imaging memory and follow-up</div>
+    </div>
+    <label for="login-name">Doctor Name</label>
+    <input type="text" id="login-name" placeholder="e.g. Anita Sharma" required>
+    <label for="login-clinic">Hospital / Clinic</label>
+    <input type="text" id="login-clinic" placeholder="e.g. City General Hospital" required>
+    <button type="submit">Sign In</button>
+    <div class="note">Demo only. No password or account needed. Synthetic data.</div>
+  </form>
+</div>
+
+<div id="app-view" class="hidden">
+  <nav class="topnav">
+    <div class="topnav-inner">
+      <header>
     <div class="logo" aria-hidden="true">
       <svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M16 5v9"/>
@@ -128,9 +182,18 @@
     </div>
     <div>
       <h1>LungTrace</h1>
-      <div class="sub">Longitudinal imaging memory and follow-up. Synthetic demo data only.</div>
+      <div class="sub">Longitudinal imaging memory and follow-up</div>
     </div>
   </header>
+      <div class="userbox">
+        <div class="who" id="user-line"></div>
+        <a href="#" id="signout">Sign Out</a>
+      </div>
+    </div>
+  </nav>
+  <main>
+    <p class="tagline">Synthetic demo data only.</p>
+  
 
   <div class="controls">
     <select id="patient"></select>
@@ -157,7 +220,9 @@
       <span class="spinner" id="sub-spin"></span><span id="sub-status"></span>
     </div>
   </section>
-</main>
+
+  </main>
+</div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -250,6 +315,38 @@ async function submitReport() {
 $("sub-btn").addEventListener("click", submitReport);
 $("memory").addEventListener("change", render);
 init();
+</script>
+<script>
+// Cosmetic, in-memory session only (resets on refresh). No auth, no storage.
+(function () {
+  let session = null;
+  const show = () => {
+    document.getElementById("login-view").classList.toggle("hidden", !!session);
+    document.getElementById("app-view").classList.toggle("hidden", !session);
+    if (session) {
+      const line = document.getElementById("user-line");
+      line.textContent = "Logged in as Dr. " + session.name;
+      const clinic = document.createElement("span");
+      clinic.textContent = session.clinic;
+      line.appendChild(clinic);
+    }
+  };
+  document.getElementById("login-form").addEventListener("submit", e => {
+    e.preventDefault();
+    const name = document.getElementById("login-name").value.trim().replace(/^dr\.?\s+/i, "");
+    const clinic = document.getElementById("login-clinic").value.trim();
+    if (!name || !clinic) return;
+    session = { name, clinic };
+    show();
+  });
+  document.getElementById("signout").addEventListener("click", e => {
+    e.preventDefault();
+    session = null;
+    document.getElementById("login-form").reset();
+    show();
+  });
+  show();
+})();
 </script>
 </body>
 </html>
