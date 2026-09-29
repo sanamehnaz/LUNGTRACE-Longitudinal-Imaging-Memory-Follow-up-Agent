@@ -139,3 +139,25 @@ def process_report(req: ProcessReportRequest):
 
 def patient_id_missing(index: dict, patient_id: str) -> bool:
     return not index.get(patient_id)
+
+
+SUMMARY_QUERY = (
+    "Summarize this patient's imaging findings, the trend over time, "
+    "and any follow-up concerns a clinician should know about."
+)
+
+
+@app.get("/api/patients/{patient_id}/summary")
+def patient_summary(patient_id: str):
+    """On-demand synthesis from Hindsight memory. Deliberately uncached: every call hits Hindsight."""
+    if patient_id_missing(load_index(), patient_id):
+        raise HTTPException(404, f"Unknown patient {patient_id}")
+    try:
+        client = Hindsight(base_url=os.getenv("HINDSIGHT_BASE_URL"), api_key=os.getenv("HINDSIGHT_API_KEY"))
+        response = client.reflect(bank_id=patient_id, query=SUMMARY_QUERY)
+    except Exception as e:
+        raise HTTPException(502, f"Hindsight reflect failed: {e}")
+    text = (getattr(response, "text", None) or "").strip()
+    if not text:
+        raise HTTPException(502, "Hindsight reflect returned an empty response.")
+    return {"patient_id": patient_id, "summary": text}

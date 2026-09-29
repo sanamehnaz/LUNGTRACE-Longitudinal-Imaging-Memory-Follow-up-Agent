@@ -208,6 +208,34 @@
   @keyframes toastIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
   @keyframes toastOut { to { opacity: 0; transform: translateY(16px); } }
 
+  /* ---------- Clinical summary (Hindsight reflect) ---------- */
+  :root { --purple: #7c5cd6; --purple-soft: #f3efff; --purple-line: #d9ceff;
+    --icon-spark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z'/%3E%3Cpath d='M19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8z'/%3E%3C/svg%3E"); }
+  #summary-card::before { background: var(--purple); }
+  #summary-card h2::before { background: var(--purple); -webkit-mask-image: var(--icon-spark); mask-image: var(--icon-spark); }
+  #summary-card { margin-bottom: 0; }
+  #summary-card p.hint { margin: 0 0 14px; color: var(--muted); font-size: .9rem; }
+  main:has(#memory:not(:checked)) #summary-card { display: none; }
+  #sum-btn { background: linear-gradient(180deg, #8b6de0, var(--purple)); box-shadow: 0 2px 6px rgba(124,92,214,.35); }
+  #sum-btn:hover:not(:disabled) { background: linear-gradient(180deg, #7f60d8, #6a49c4); box-shadow: 0 6px 16px rgba(124,92,214,.4); }
+  #sum-btn:disabled { background: var(--grey); box-shadow: none; }
+  #summary-card:focus-within #sum-btn:focus-visible { outline-color: var(--purple); }
+  #summary-card .actions { margin-top: 0; padding-bottom: 10px; }
+  #summary-card .spinner { border-top-color: var(--purple); }
+  #summary-card.busy .spinner { display: inline-block; }
+  #summary-card.busy .actions::after { background: linear-gradient(90deg, transparent 0, var(--purple) 40%, #a08be8 60%, transparent 100%) 0 0/40% 100% no-repeat, var(--line-2); animation: bar 1.2s linear infinite; }
+  #sum-status { font-size: .9rem; color: var(--ink-2); }
+  #sum-status.err { color: var(--red); font-weight: 500; }
+  .sum-out { margin-top: 12px; background: var(--purple-soft); border: 1px solid var(--purple-line); border-radius: 10px; padding: 16px 18px; animation: rise .4s var(--ease) both; }
+  .sum-out .lbl { display: inline-flex; align-items: center; gap: 6px; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--purple); margin-bottom: 8px; }
+  .sum-out .body { white-space: pre-wrap; line-height: 1.6; font-size: .95rem; color: var(--ink); }
+  .sum-out .foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--purple-line); font-size: .76rem; color: var(--muted); }
+  .sum-err { margin-top: 12px; background: var(--red-soft); border: 1px solid var(--red-line); color: #7a1f1f; border-radius: 10px; padding: 12px 16px; font-size: .9rem; animation: rise .3s var(--ease) both; }
+  @media (min-width: 1100px) {
+    #summary-card { grid-column: 1; grid-row: 4; }
+    section.submit { grid-row: 3 / span 2; }
+  }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
     #app-view { flex-direction: column; }
@@ -295,6 +323,17 @@
 
       <div id="error" class="error"></div>
       <div id="content"></div>
+
+
+      <section id="summary-card">
+        <h2>Clinical summary</h2>
+        <p class="hint">Ask the patient's memory for a synthesized summary of findings, trend and follow-up concerns.</p>
+        <div class="actions">
+          <button id="sum-btn" type="button">Generate Clinical Summary</button>
+          <span class="spinner" id="sum-spin"></span><span id="sum-status"></span>
+        </div>
+        <div id="sum-result"></div>
+      </section>
 
       <section class="submit" id="submit-panel">
         <h2>Submit new report</h2>
@@ -512,6 +551,52 @@ init();
     if (status.classList.contains("ok") && status.textContent && status.textContent !== last) { last = status.textContent; toast(status.textContent); }
     if (!status.classList.contains("ok")) last = "";
   }).observe(status, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class"] });
+})();
+</script>
+<script>
+// Additive: "Generate Clinical Summary" (Hindsight reflect). Independent of the dashboard script's state.
+(function () {
+  const $ = id => document.getElementById(id);
+  let seq = 0;  // invalidates in-flight results when the patient changes or a new report lands
+
+  function clear() { seq++; $("sum-result").textContent = ""; $("sum-status").textContent = ""; $("sum-status").className = ""; }
+
+  async function generate() {
+    const pid = $("patient").value;
+    if (!pid) return;
+    const mine = ++seq, btn = $("sum-btn"), card = $("summary-card");
+    $("sum-result").textContent = ""; $("sum-status").className = "";
+    btn.disabled = true; card.classList.add("busy");
+    $("sum-status").textContent = "Reflecting on patient memory... this can take several seconds";
+    try {
+      const r = await fetch(`/api/patients/${encodeURIComponent(pid)}/summary`);
+      let data = {};
+      try { data = await r.json(); } catch (_) {}
+      if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${r.status})`);
+      if (mine !== seq) return;
+      $("sum-status").textContent = "";
+      const box = document.createElement("div"); box.className = "sum-out";
+      const lbl = document.createElement("div"); lbl.className = "lbl"; lbl.textContent = "AI Clinical Summary (via Hindsight reflect)";
+      const body = document.createElement("div"); body.className = "body"; body.textContent = data.summary;
+      const foot = document.createElement("div"); foot.className = "foot"; foot.textContent = "AI-generated from patient memory. Verify against the source reports. Decision support only.";
+      box.append(lbl, body, foot);
+      $("sum-result").appendChild(box);
+    } catch (e) {
+      if (mine !== seq) return;
+      $("sum-status").textContent = "";
+      const err = document.createElement("div"); err.className = "sum-err"; err.setAttribute("role", "alert");
+      err.textContent = "Could not generate summary. " + e.message;
+      $("sum-result").appendChild(err);
+    } finally {
+      if (mine === seq) { btn.disabled = false; card.classList.remove("busy"); }
+    }
+  }
+
+  $("sum-btn").addEventListener("click", generate);
+  $("patient").addEventListener("change", () => { clear(); $("sum-btn").disabled = false; $("summary-card").classList.remove("busy"); });
+  // A newly processed report makes any shown summary stale
+  new MutationObserver(() => { if ($("sub-status").classList.contains("ok")) { clear(); $("sum-btn").disabled = false; $("summary-card").classList.remove("busy"); } })
+    .observe($("sub-status"), { attributes: true, attributeFilter: ["class"] });
 })();
 </script>
 </body>
