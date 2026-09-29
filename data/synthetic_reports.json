@@ -142,5 +142,17 @@
     "recommendation": "Follow-up imaging recommended in 3 months",
     "follow_up_due_date": "2026-12-02",
     "report_text": "CT ABDOMEN WITH CONTRAST. CLINICAL HISTORY: Hepatic lesion surveillance. FINDINGS: A 9.5 mm hypodense lesion in hepatic segment VI, indeterminate. Liver otherwise normal in size and attenuation. No portal vein thrombosis. IMPRESSION: 9.5 mm segment VI hepatic lesion, borderline. Follow-up imaging in 3 months."
+  },
+  {
+    "patient_id": "P006",
+    "patient_name": "Meera Iyer",
+    "date": "2026-02-01",
+    "organ": "Lung",
+    "location": "Left upper lobe",
+    "finding_type": "Nodule",
+    "size_mm": 4.5,
+    "recommendation": "Follow-up CT in 4 months",
+    "follow_up_due_date": "2026-06-01",
+    "report_text": "CT CHEST WITHOUT CONTRAST. CLINICAL HISTORY: Pre-operative imaging, no prior chest CT available for comparison. FINDINGS: A 4.5 mm solid nodule is identified in the left upper lobe, well circumscribed with smooth margins and no calcification or cavitation. The remaining lung parenchyma is clear. No pleural effusion or pneumothorax. Mediastinal and hilar lymph nodes are not enlarged. Heart size is normal. IMPRESSION: Indeterminate 4.5 mm left upper lobe nodule. Follow-up CT in 4 months."
   }
 ]
