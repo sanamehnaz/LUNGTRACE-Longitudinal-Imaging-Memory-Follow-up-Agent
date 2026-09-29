@@ -28,6 +28,16 @@
   th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
   th { color: #616e7c; font-weight: 600; font-size: .85rem; }
   .error { color: #8a1c1c; }
+  .submit label { display: block; font-weight: 600; margin: 10px 0 4px; }
+  .submit .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .submit textarea { width: 100%; box-sizing: border-box; min-height: 140px; font: inherit; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 6px; }
+  .submit input[type=date] { font-size: 1rem; padding: 7px 10px; border: 1px solid #cbd2d9; border-radius: 6px; }
+  button { font-size: 1rem; padding: 9px 18px; border: 0; border-radius: 6px; background: #2b6cb0; color: #fff; cursor: pointer; margin-top: 12px; }
+  button:disabled { background: #9aa5b1; cursor: wait; }
+  .spinner { display: none; width: 16px; height: 16px; border: 3px solid #cbd2d9; border-top-color: #2b6cb0; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: middle; margin: 0 8px 0 14px; }
+  .busy .spinner { display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .ok { color: #276749; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -46,6 +56,20 @@
 
   <div id="error" class="error"></div>
   <div id="content"></div>
+
+  <section class="submit" id="submit-panel">
+    <h2>Submit new report</h2>
+    <div class="row">
+      <div><label for="sub-patient">Patient</label><select id="sub-patient"></select></div>
+      <div><label for="sub-date">Report date</label><input type="date" id="sub-date"></div>
+    </div>
+    <label for="sub-text">Report text</label>
+    <textarea id="sub-text" placeholder="Paste the radiology report here..."></textarea>
+    <div>
+      <button id="sub-btn">Process Report</button>
+      <span class="spinner" id="sub-spin"></span><span id="sub-status"></span>
+    </div>
+  </section>
 </main>
 
 <script>
@@ -103,12 +127,40 @@ async function init() {
     const r = await fetch("/api/patients");
     if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
     const patients = await r.json();
-    $("patient").innerHTML = patients.map(p => `<option value="${esc(p.patient_id)}">${esc(p.patient_name)} (${esc(p.patient_id)})</option>`).join("");
+    const opts = patients.map(p => `<option value="${esc(p.patient_id)}">${esc(p.patient_name)} (${esc(p.patient_id)})</option>`).join("");
+    $("patient").innerHTML = opts;
+    $("sub-patient").innerHTML = opts;
+    $("sub-date").value = new Date().toISOString().slice(0, 10);
     if (patients.length) load(patients[0].patient_id);
   } catch (e) { $("error").textContent = e.message; }
 }
 
-$("patient").addEventListener("change", e => load(e.target.value));
+$("patient").addEventListener("change", e => { load(e.target.value); $("sub-patient").value = e.target.value; });
+
+async function submitReport() {
+  const status = $("sub-status"), btn = $("sub-btn");
+  const body = { patient_id: $("sub-patient").value, date: $("sub-date").value, report_text: $("sub-text").value };
+  if (!body.report_text.trim()) { status.className = "error"; status.textContent = "Paste a report first."; return; }
+  btn.disabled = true; $("submit-panel").classList.add("busy");
+  status.className = ""; status.textContent = "Processing... (extracting and saving to memory, this can take a few seconds)";
+  try {
+    const r = await fetch("/api/process-report", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+    let data = {};
+    try { data = await r.json(); } catch (_) {}
+    if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${r.status})`);
+    current = data;
+    $("patient").value = data.patient_id;
+    render();
+    status.className = "ok";
+    status.textContent = `Saved: ${data.new_finding.location} ${data.new_finding.finding_type.toLowerCase()}, ${data.new_finding.size_mm}mm.`;
+    $("sub-text").value = "";
+  } catch (e) {
+    status.className = "error"; status.textContent = e.message;
+  } finally {
+    btn.disabled = false; $("submit-panel").classList.remove("busy");
+  }
+}
+$("sub-btn").addEventListener("click", submitReport);
 $("memory").addEventListener("change", render);
 init();
 </script>
