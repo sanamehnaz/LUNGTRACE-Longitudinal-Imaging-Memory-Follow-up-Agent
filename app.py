@@ -161,3 +161,10 @@ def patient_summary(patient_id: str):
     if not text:
         raise HTTPException(502, "Hindsight reflect returned an empty response.")
     return {"patient_id": patient_id, "summary": text}
+
+
+@app.get("/api/overview")
+def overview():
+    """Open (overdue, unfollowed) loops across all patients, worst first."""
+    flags = check_open_loops({pid: [dict(f) for f in findings] for pid, findings in load_index().items()})
+    return sorted(flags, key=lambda f: f["days_overdue"], reverse=True)

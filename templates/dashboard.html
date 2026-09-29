@@ -236,11 +236,68 @@
     section.submit { grid-row: 3 / span 2; }
   }
 
+  /* ---------- Overview page ---------- */
+  :root { --icon-bell: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9'/%3E%3Cpath d='M13.7 21a2 2 0 0 1-3.4 0'/%3E%3C/svg%3E");
+    --icon-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='5 12.5 10 17.5 19 7'/%3E%3C/svg%3E");
+    --icon-users: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='8' r='4'/%3E%3Cpath d='M4 21c0-4 4-6 8-6s8 2 8 6'/%3E%3C/svg%3E"); }
+  a.navitem { text-decoration: none; cursor: pointer; transition: background .2s var(--ease), color .2s var(--ease); }
+  a.navitem:hover:not(.active) { background: #f4f7fb; color: var(--ink); }
+  #nav-overview::before { -webkit-mask-image: var(--icon-bell); mask-image: var(--icon-bell); }
+  #nav-patient::before { -webkit-mask-image: var(--icon-users); mask-image: var(--icon-users); }
+  #nav-count { margin-left: auto; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: .72rem; font-weight: 800; display: grid; place-items: center; }
+  #nav-count:empty, #nav-count.none { display: none; }
+
+  #app-view[data-view="overview"] .shell > main:not(#overview-view) { display: none; }
+  #app-view[data-view="patient"] #overview-view { display: none; }
+  .topbar .v-ov, .topbar .v-pt { display: none; }
+  #app-view[data-view="overview"] .topbar .v-ov, #app-view[data-view="patient"] .topbar .v-pt { display: block; }
+
+  #overview-view { display: block; }
+  #overview-view > * + * { margin-top: 24px; }
+  .ov-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .ov-head h2 { margin: 0; font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em; text-transform: none; color: var(--ink); }
+  .ov-head h2::before { display: none; }
+  .ov-sub { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+  .ov-badge { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px; font-size: .88rem; font-weight: 700; background: var(--red-soft); color: var(--red); border: 1px solid var(--red-line); }
+  .ov-badge.ok { background: var(--green-soft); color: #22764f; border-color: #bfe6d3; }
+  .ov-list { display: grid; gap: 16px; }
+  .ov-card { position: relative; display: flex; align-items: center; gap: 20px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--sh-1); padding: 20px 24px 20px 30px; cursor: pointer; overflow: hidden; transition: box-shadow .25s var(--ease), transform .25s var(--ease), border-color .25s var(--ease); animation: rise .45s var(--ease) both; }
+  .ov-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--tone); }
+  .ov-card:hover { box-shadow: var(--sh-2); transform: translateY(-2px); border-color: var(--tone); }
+  .ov-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+  .ov-card.sev-1 { --tone: #dd8a20; --tone-soft: #fff7e8; }
+  .ov-card.sev-2 { --tone: #dd5a20; --tone-soft: #fff1e8; }
+  .ov-card.sev-3 { --tone: var(--red); --tone-soft: var(--red-soft); }
+  .ov-info { flex: 1; min-width: 0; }
+  .ov-name { font-size: 1.1rem; font-weight: 700; }
+  .ov-name small { color: var(--muted); font-weight: 500; font-size: .85rem; margin-left: 6px; }
+  .ov-where { color: var(--ink-2); margin-top: 2px; }
+  .ov-due { color: var(--muted); font-size: .85rem; margin-top: 8px; font-variant-numeric: tabular-nums; }
+  .ov-days { text-align: center; background: var(--tone-soft); border-radius: 12px; padding: 10px 20px; min-width: 116px; }
+  .ov-days b { display: block; font-size: 2.3rem; line-height: 1.1; font-weight: 800; color: var(--tone); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .ov-days span { font-size: .72rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--tone); }
+  .ov-go { color: var(--grey); font-size: 1.4rem; transition: transform .2s var(--ease), color .2s; }
+  .ov-card:hover .ov-go { transform: translateX(4px); color: var(--tone); }
+  .ov-empty { text-align: center; background: var(--card); border: 1px solid #cfe9dc; border-radius: 14px; box-shadow: var(--sh-1); padding: 56px 24px; animation: rise .45s var(--ease) both; }
+  .ov-empty .tick { width: 64px; height: 64px; margin: 0 auto 16px; border-radius: 50%; background: var(--green) var(--icon-check) center/34px no-repeat; box-shadow: 0 0 0 10px rgba(47,158,107,.14); }
+  .ov-empty h3 { margin: 0 0 6px; font-size: 1.25rem; color: #22764f; }
+  .ov-empty p { margin: 0; color: var(--muted); }
+  .ov-loading { color: var(--muted); padding: 32px 0; display: flex; align-items: center; gap: 12px; }
+  .ov-loading::before { content: ""; width: 18px; height: 18px; border: 3px solid #d5dde8; border-top-color: var(--blue); border-radius: 50%; animation: spin .7s linear infinite; }
+  @media (max-width: 560px) {
+    .ov-card { flex-direction: column; align-items: stretch; gap: 12px; padding: 16px 16px 16px 22px; }
+    .ov-go { display: none; }
+    .ov-days { order: -1; }
+  }
+
   /* ---------- Responsive ---------- */
   @media (max-width: 860px) {
     #app-view { flex-direction: column; }
     .sidebar { width: 100%; height: auto; position: static; flex-direction: row; align-items: center; padding: 12px 16px; border-right: 0; border-bottom: 1px solid var(--line); }
-    .sidebar nav, .side-note { display: none; }
+    .sidebar { flex-wrap: wrap; gap: 8px 16px; }
+    .side-note, .navlabel { display: none; }
+    .sidebar nav { display: flex; gap: 6px; margin-left: auto; }
+    .navitem { padding: 7px 10px; font-size: .84rem; }
     .topbar { position: static; padding: 12px 16px; }
     main { padding: 20px 16px 48px; }
     section.submit { position: relative; top: auto; }
@@ -282,7 +339,7 @@
   </form>
 </div>
 
-<div id="app-view" class="hidden">
+<div id="app-view" class="hidden" data-view="overview">
   <aside class="sidebar">
     <div class="brand-row">
       <div class="logo" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -294,7 +351,8 @@
     </div>
     <nav>
       <div class="navlabel">Workspace</div>
-      <div class="navitem active">Patient overview</div>
+      <a href="#" class="navitem active" id="nav-overview">Overview<span id="nav-count" class="none"></span></a>
+      <a href="#" class="navitem" id="nav-patient">Patient overview</a>
     </nav>
     <div class="side-note">Synthetic demo data. Decision-support prototype, not for clinical use.</div>
   </aside>
@@ -302,8 +360,10 @@
   <div class="shell">
     <div class="topbar">
       <div>
-        <div class="ttl">Patient overview</div>
-        <div class="tag">Interval change and follow-up tracking</div>
+        <div class="ttl v-pt">Patient overview</div>
+        <div class="tag v-pt">Interval change and follow-up tracking</div>
+        <div class="ttl v-ov">Overview</div>
+        <div class="tag v-ov">What needs attention across all patients</div>
       </div>
       <div class="userbox">
         <div class="who" id="user-line"></div>
@@ -348,6 +408,17 @@
           <span class="spinner" id="sub-spin"></span><span id="sub-status"></span>
         </div>
       </section>
+    </main>
+
+    <main id="overview-view">
+      <div class="ov-head">
+        <div>
+          <h2>Overdue Follow-ups</h2>
+          <div class="ov-sub">Recommended follow-up scans that are past due with no later scan on record. Worst first.</div>
+        </div>
+        <span class="ov-badge" id="ov-badge" hidden></span>
+      </div>
+      <div id="ov-body"></div>
     </main>
   </div>
 </div>
@@ -597,6 +668,114 @@ init();
   // A newly processed report makes any shown summary stale
   new MutationObserver(() => { if ($("sub-status").classList.contains("ok")) { clear(); $("sum-btn").disabled = false; $("summary-card").classList.remove("busy"); } })
     .observe($("sub-status"), { attributes: true, attributeFilter: ["class"] });
+})();
+</script>
+<script>
+// Additive: Overview page (overdue follow-ups across all patients). Reuses the dashboard's own patient switching via the #patient select.
+(function () {
+  const $ = id => document.getElementById(id);
+  const app = $("app-view");
+  let seq = 0;
+
+  function setView(v) {
+    app.dataset.view = v;
+    $("nav-overview").classList.toggle("active", v === "overview");
+    $("nav-patient").classList.toggle("active", v === "patient");
+    if (v === "overview") loadOverview();
+  }
+
+  function sev(days) { return days >= 90 ? "sev-3" : days >= 30 ? "sev-2" : "sev-1"; }
+
+  function setCount(n) {
+    const c = $("nav-count");
+    c.textContent = n ? String(n) : "";
+    c.classList.toggle("none", !n);
+  }
+
+  function openPatient(pid) {
+    const sel = $("patient");
+    if (sel.value !== pid) { sel.value = pid; sel.dispatchEvent(new Event("change")); }
+    setView("patient");
+    window.scrollTo({ top: 0 });
+  }
+
+  function card(f, i) {
+    const el = document.createElement("div");
+    el.className = "ov-card " + sev(f.days_overdue);
+    el.tabIndex = 0; el.setAttribute("role", "button");
+    el.style.animationDelay = (i * 0.06) + "s";
+    const info = document.createElement("div"); info.className = "ov-info";
+    const name = document.createElement("div"); name.className = "ov-name"; name.textContent = f.patient_name;
+    const id = document.createElement("small"); id.textContent = f.patient_id; name.appendChild(id);
+    const where = document.createElement("div"); where.className = "ov-where";
+    where.textContent = `${f.organ} \u00b7 ${f.location}` + (f.finding_type ? ` \u00b7 ${f.finding_type.toLowerCase()}` : "");
+    const due = document.createElement("div"); due.className = "ov-due"; due.textContent = "Follow-up was due " + f.follow_up_due_date;
+    info.append(name, where, due);
+    const days = document.createElement("div"); days.className = "ov-days";
+    const b = document.createElement("b"); b.textContent = f.days_overdue;
+    const s = document.createElement("span"); s.textContent = f.days_overdue === 1 ? "day overdue" : "days overdue";
+    days.append(b, s);
+    const go = document.createElement("span"); go.className = "ov-go"; go.setAttribute("aria-hidden", "true"); go.textContent = "\u203a";
+    el.append(info, days, go);
+    el.setAttribute("aria-label", `${f.patient_name}, ${f.days_overdue} days overdue. Open patient.`);
+    el.addEventListener("click", () => openPatient(f.patient_id));
+    el.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPatient(f.patient_id); } });
+    return el;
+  }
+
+  async function loadOverview() {
+    const mine = ++seq, body = $("ov-body"), badge = $("ov-badge");
+    badge.hidden = true;
+    body.textContent = "";
+    const ld = document.createElement("div"); ld.className = "ov-loading"; ld.textContent = "Checking all patients...";
+    body.appendChild(ld);
+    try {
+      const r = await fetch("/api/overview");
+      let data = [];
+      try { data = await r.json(); } catch (_) {}
+      if (!r.ok) throw new Error(typeof data.detail === "string" ? data.detail : `Request failed (${r.status})`);
+      if (mine !== seq) return;
+      body.textContent = "";
+      setCount(data.length);
+      badge.hidden = false;
+      if (!data.length) {
+        badge.className = "ov-badge ok"; badge.textContent = "All clear";
+        const e = document.createElement("div"); e.className = "ov-empty";
+        const t = document.createElement("div"); t.className = "tick";
+        const h3 = document.createElement("h3"); h3.textContent = "All patients are up to date";
+        const p = document.createElement("p"); p.textContent = "No overdue follow-ups. Nothing needs your attention right now.";
+        e.append(t, h3, p); body.appendChild(e);
+        return;
+      }
+      badge.className = "ov-badge";
+      badge.textContent = data.length === 1 ? "1 patient needs attention" : `${data.length} patients need attention`;
+      const list = document.createElement("div"); list.className = "ov-list";
+      data.forEach((f, i) => list.appendChild(card(f, i)));
+      body.appendChild(list);
+    } catch (e) {
+      if (mine !== seq) return;
+      body.textContent = "";
+      const err = document.createElement("div"); err.className = "sum-err"; err.setAttribute("role", "alert");
+      err.textContent = "Could not load overdue follow-ups. " + e.message;
+      body.appendChild(err);
+    }
+  }
+
+  $("nav-overview").addEventListener("click", e => { e.preventDefault(); setView("overview"); });
+  $("nav-patient").addEventListener("click", e => { e.preventDefault(); setView("patient"); });
+
+  // Land on Overview each time the user signs in
+  let wasHidden = app.classList.contains("hidden");
+  new MutationObserver(() => {
+    const hidden = app.classList.contains("hidden");
+    if (wasHidden && !hidden) setView("overview");
+    wasHidden = hidden;
+  }).observe(app, { attributes: true, attributeFilter: ["class"] });
+
+  // Keep the sidebar count fresh after a new report is processed
+  new MutationObserver(() => {
+    if ($("sub-status").classList.contains("ok")) fetch("/api/overview").then(r => r.json()).then(d => Array.isArray(d) && setCount(d.length)).catch(() => {});
+  }).observe($("sub-status"), { attributes: true, attributeFilter: ["class"] });
 })();
 </script>
 </body>
