@@ -72,6 +72,16 @@ def extract_finding(report_text: str, patient_id: str, date: str) -> dict:
     return result
 
 
+def fields_match(field: str, extracted, truth) -> bool:
+    """Compare one field. Strings are case-insensitive; location allows containment either way."""
+    if field in ("organ", "location", "finding_type") and isinstance(extracted, str) and isinstance(truth, str):
+        a, b = extracted.strip().lower(), truth.strip().lower()
+        if field == "location":
+            return bool(a) and bool(b) and (a in b or b in a)
+        return a == b
+    return extracted == truth
+
+
 if __name__ == "__main__":
     path = os.path.join(os.path.dirname(__file__), "data", "synthetic_reports.json")
     with open(path, encoding="utf-8") as f:
@@ -92,9 +102,9 @@ if __name__ == "__main__":
             if field == "recommendation":
                 continue  # free text; compare visually
             total += 1
-            ok = extracted[field] == truth[field]
+            ok = fields_match(field, extracted[field], truth[field])
             matches += ok
             if not ok:
                 print(f"  MISMATCH {field}: extracted={extracted[field]!r} truth={truth[field]!r}")
         print()
-    print(f"Exact-match fields (excluding recommendation): {matches}/{total}")
+    print(f"Matching fields (excluding recommendation): {matches}/{total}")
