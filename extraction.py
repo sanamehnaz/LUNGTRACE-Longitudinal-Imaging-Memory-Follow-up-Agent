@@ -8,9 +8,7 @@ from groq import Groq
 load_dotenv()
 
 MODEL = "openai/gpt-oss-120b"
-FIELDS = [
-    "patient_id",
-    "date",
+EXTRACTED_FIELDS = [
     "organ",
     "location",
     "finding_type",
@@ -18,17 +16,17 @@ FIELDS = [
     "recommendation",
     "follow_up_due_date",
 ]
+FIELDS = ["patient_id", "date"] + EXTRACTED_FIELDS
 
 SYSTEM_PROMPT = """You extract structured data from radiology reports.
 Return ONLY a valid JSON object with exactly these keys and nothing else:
-- patient_id (string, or null if not stated)
-- date (YYYY-MM-DD, or null if not stated)
 - organ (string)
 - location (string)
 - finding_type (string, e.g. "Nodule", "Lesion")
 - size_mm (number)
 - recommendation (short text)
-- follow_up_due_date (YYYY-MM-DD, or null if no follow-up is needed or it cannot be determined)
+- follow_up_due_date (YYYY-MM-DD: the report date plus the interval in the recommendation, e.g. "in 6 months" means the same day 6 months later; null if no follow-up is needed)
+The user message gives the patient ID and report date as known context; use the report date to compute follow_up_due_date. Do not return patient_id or date.
 No markdown, no code fences, no commentary. Use null for anything not stated in the report; do not guess."""
 
 _client = None
@@ -56,17 +54,22 @@ def parse_json_response(raw: str) -> dict:
         raise
 
 
-def extract_finding(report_text: str) -> dict:
+def extract_finding(report_text: str, patient_id: str, date: str) -> dict:
     response = _get_client().chat.completions.create(
         model=MODEL,
         temperature=0,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": report_text},
+            {
+                "role": "user",
+                "content": f"This report is for patient {patient_id}, dated {date}.\n\n{report_text}",
+            },
         ],
     )
     data = parse_json_response(response.choices[0].message.content)
-    return {field: data.get(field) for field in FIELDS}
+    result = {"patient_id": patient_id, "date": date}
+    result.update({field: data.get(field) for field in EXTRACTED_FIELDS})
+    return result
 
 
 if __name__ == "__main__":
@@ -78,7 +81,7 @@ if __name__ == "__main__":
     for i, report in enumerate(reports, 1):
         truth = {field: report[field] for field in FIELDS}
         try:
-            extracted = extract_finding(report["report_text"])
+            extracted = extract_finding(report["report_text"], report["patient_id"], report["date"])
         except Exception as e:
             print(f"=== Report {i}: {report['patient_id']} {report['date']} === ERROR: {e}\n")
             continue
