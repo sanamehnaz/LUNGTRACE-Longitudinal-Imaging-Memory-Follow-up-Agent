@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LungTrace Dashboard</title>
+<style>
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #f5f6f8; color: #1f2933; margin: 0; }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 48px; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .sub { color: #616e7c; margin-bottom: 20px; }
+  .controls { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+  select { font-size: 1rem; padding: 8px 10px; border: 1px solid #cbd2d9; border-radius: 6px; background: #fff; }
+  .toggle { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+  .switch { position: relative; width: 48px; height: 26px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; inset: 0; background: #9aa5b1; border-radius: 26px; cursor: pointer; transition: .2s; }
+  .slider::before { content: ""; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+  input:checked + .slider { background: #2f855a; }
+  input:checked + .slider::before { transform: translateX(22px); }
+  section { background: #fff; border: 1px solid #e4e7eb; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+  h2 { font-size: 1rem; margin: 0 0 10px; text-transform: uppercase; letter-spacing: .04em; color: #52606d; }
+  .alert { background: #fdecea; border: 2px solid #d64545; color: #8a1c1c; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-weight: 600; }
+  .muted { color: #7b8794; }
+  ul { margin: 0; padding-left: 20px; }
+  li { margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid #eef0f3; vertical-align: top; }
+  th { color: #616e7c; font-weight: 600; font-size: .85rem; }
+  .error { color: #8a1c1c; }
+</style>
+</head>
+<body>
+<main>
+  <h1>LungTrace</h1>
+  <div class="sub">Longitudinal imaging memory and follow-up. Synthetic demo data only.</div>
+
+  <div class="controls">
+    <select id="patient"></select>
+    <label class="toggle">
+      Memory:
+      <span class="switch"><input type="checkbox" id="memory" checked><span class="slider"></span></span>
+      <span id="memory-label">ON</span>
+    </label>
+  </div>
+
+  <div id="error" class="error"></div>
+  <div id="content"></div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let current = null;
+
+function describe(f) {
+  return `${esc(f.location)} ${esc((f.finding_type || "finding").toLowerCase())}, ${esc(f.size_mm)}mm`;
+}
+
+function render() {
+  if (!current) return;
+  const on = $("memory").checked;
+  $("memory-label").textContent = on ? "ON" : "OFF";
+  const p = current;
+  let html = "";
+
+  if (!on) {
+    const f = p.latest;
+    html += `<section><h2>Most recent finding (no history)</h2>
+      <p><strong>${esc(f.date)}</strong>: ${describe(f)} (${esc(f.organ)}).</p>
+      <p>Recommendation: ${esc(f.recommendation)}</p>
+      <p class="muted">Without memory, only this single report is visible. No trend, no prior scans, no overdue follow-up check.</p></section>`;
+    $("content").innerHTML = html;
+    return;
+  }
+
+  p.open_loops.forEach(l => {
+    html += `<div class="alert">OPEN LOOP: ${esc(l.patient_name)} (${esc(l.patient_id)}) - ${esc(l.location)} ${esc(l.finding_type.toLowerCase())}
+      follow-up was due ${esc(l.follow_up_due_date)}, now ${esc(l.days_overdue)} days overdue. No follow-up scan found.</div>`;
+  });
+
+  html += `<section><h2>Interval change</h2><ul>${p.interval_summary.map(s => `<li>${esc(s)}</li>`).join("")}</ul></section>`;
+
+  html += `<section><h2>Finding history</h2><table>
+    <tr><th>Date</th><th>Size</th><th>Recommendation</th><th>Follow-up due</th></tr>
+    ${p.history.map(f => `<tr><td>${esc(f.date)}</td><td>${esc(f.size_mm)}mm</td><td>${esc(f.recommendation)}</td><td>${esc(f.follow_up_due_date || "none")}</td></tr>`).join("")}
+    </table></section>`;
+  $("content").innerHTML = html;
+}
+
+async function load(pid) {
+  $("error").textContent = "";
+  try {
+    const r = await fetch(`/api/patients/${encodeURIComponent(pid)}`);
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    current = await r.json();
+    render();
+  } catch (e) { $("error").textContent = e.message; }
+}
+
+async function init() {
+  try {
+    const r = await fetch("/api/patients");
+    if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+    const patients = await r.json();
+    $("patient").innerHTML = patients.map(p => `<option value="${esc(p.patient_id)}">${esc(p.patient_name)} (${esc(p.patient_id)})</option>`).join("");
+    if (patients.length) load(patients[0].patient_id);
+  } catch (e) { $("error").textContent = e.message; }
+}
+
+$("patient").addEventListener("change", e => load(e.target.value));
+$("memory").addEventListener("change", render);
+init();
+</script>
+</body>
+</html>

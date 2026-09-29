@@ -74,9 +74,8 @@ def _months_between(d1: str, d2: str) -> int:
     return round((date.fromisoformat(d2) - date.fromisoformat(d1)).days / 30.44)
 
 
-def generate_interval_summary(bank_id: str) -> str:
-    timeline = get_patient_timeline(bank_id)  # exercises Hindsight recall
-    findings = _load_index(bank_id) or _parse_from_timeline(timeline)
+def summarize_findings(findings: list) -> str:
+    """Pure-Python interval summary from structured findings (no network calls)."""
     if not findings:
         return "No findings found."
 
@@ -100,6 +99,12 @@ def generate_interval_summary(bank_id: str) -> str:
         lines.append(f"{label}: {chain}. {word}: {abs(change):g}% over {span}." if change else
                      f"{label}: {chain}. Stable over {span}.")
     return "\n".join(lines)
+
+
+def generate_interval_summary(bank_id: str) -> str:
+    timeline = get_patient_timeline(bank_id)  # exercises Hindsight recall
+    findings = _load_index(bank_id) or _parse_from_timeline(timeline)
+    return summarize_findings(findings)
 
 
 if __name__ == "__main__":
