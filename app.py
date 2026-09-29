@@ -11,7 +11,7 @@ from hindsight_client import Hindsight
 from pydantic import BaseModel
 
 from extraction import extract_finding
-from ingest_to_hindsight import build_content
+from ingest_to_hindsight import build_content, merge_finding
 from interval_check import summarize_findings
 from open_loop_check import check_open_loops
 
@@ -124,13 +124,8 @@ def process_report(req: ProcessReportRequest):
     entry = {"patient_name": patient_name, **{k: finding[k] for k in INDEX_FIELDS}}
     with index_lock:
         index = load_index()
+        merge_finding(index, req.patient_id, entry)
         findings = index[req.patient_id]
-        findings[:] = [
-            f for f in findings
-            if not (f["date"] == entry["date"] and f["organ"].lower() == entry["organ"].lower()
-                    and f["location"].lower() == entry["location"].lower())
-        ]
-        findings.append(entry)
         save_index(index)
 
     # 4. Recompute summary and open loops

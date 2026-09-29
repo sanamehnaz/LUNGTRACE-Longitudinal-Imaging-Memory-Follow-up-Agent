@@ -14,6 +14,37 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), "data", "synthetic_reports.j
 INDEX_PATH = os.path.join(os.path.dirname(__file__), "data", "findings_index.json")
 
 
+INDEX_FIELDS = ("date", "organ", "location", "finding_type", "size_mm", "recommendation", "follow_up_due_date")
+
+
+def load_index(path: str = None) -> dict:
+    """Existing local index, or {} if it doesn't exist yet."""
+    try:
+        with open(path or INDEX_PATH, encoding="utf-8") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
+
+
+def save_index(index: dict, path: str = None) -> None:
+    """Atomic write so an interrupted run can't corrupt the index."""
+    path = path or INDEX_PATH
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(index, f, indent=2)
+    os.replace(tmp, path)
+
+
+def merge_finding(index: dict, patient_id: str, entry: dict) -> None:
+    """Add or update one finding. Identity is (date, organ, location), so re-ingesting the same report
+    updates it in place instead of duplicating it, and findings from other sources are left alone."""
+    key = lambda f: (f["date"], f["organ"].lower(), f["location"].lower())
+    findings = index.setdefault(patient_id, [])
+    findings[:] = [f for f in findings if key(f) != key(entry)]
+    findings.append(entry)
+    findings.sort(key=lambda f: f["date"])
+
+
 def build_content(finding: dict) -> str:
     follow_up = finding["follow_up_due_date"] or "none"
     return (
@@ -38,7 +69,7 @@ def main():
         by_patient[report["patient_id"]].append(report)
 
     total_retained = 0
-    index = defaultdict(list)  # local structured copy, used by interval_check.py
+    index = load_index()  # merge into what's already there (e.g. live-submitted reports)
     for patient_id, patient_reports in by_patient.items():
         patient_reports.sort(key=lambda r: r["date"])
         patient_name = patient_reports[0]["patient_name"]
@@ -61,14 +92,13 @@ def main():
                     document_id=f"{patient_id}-{report['date']}",
                 )
                 total_retained += 1
-                index[patient_id].append({"patient_name": patient_name, **{k: finding[k] for k in ("date", "organ", "location", "finding_type", "size_mm", "recommendation", "follow_up_due_date")}})
+                merge_finding(index, patient_id, {"patient_name": patient_name, **{k: finding[k] for k in INDEX_FIELDS}})
                 print(f"[retain] {patient_id} {report['date']}: {content[:90]}...")
             except Exception as e:
                 print(f"[error] {patient_id} {report['date']}: {e}")
 
-    with open(INDEX_PATH, "w", encoding="utf-8") as f:
-        json.dump(index, f, indent=2)
-    print(f"[index] wrote {INDEX_PATH}")
+    save_index(index)
+    print(f"[index] merged into {INDEX_PATH}")
 
     print(f"\nSummary: {len(by_patient)} patients, {total_retained} findings retained "
           f"(of {len(reports)} reports)")
