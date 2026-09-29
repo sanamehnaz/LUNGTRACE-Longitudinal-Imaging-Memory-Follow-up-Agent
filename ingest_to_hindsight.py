@@ -61,7 +61,7 @@ def main():
                     document_id=f"{patient_id}-{report['date']}",
                 )
                 total_retained += 1
-                index[patient_id].append({k: finding[k] for k in ("date", "organ", "location", "finding_type", "size_mm", "recommendation", "follow_up_due_date")})
+                index[patient_id].append({"patient_name": patient_name, **{k: finding[k] for k in ("date", "organ", "location", "finding_type", "size_mm", "recommendation", "follow_up_due_date")}})
                 print(f"[retain] {patient_id} {report['date']}: {content[:90]}...")
             except Exception as e:
                 print(f"[error] {patient_id} {report['date']}: {e}")
